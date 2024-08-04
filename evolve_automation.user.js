@@ -5865,10 +5865,24 @@
                         }
                     }
                 }
+                let totalCost = 0;
+                for (let res in building.cost) {
+                    let resource = resources[res];
+                    let quantity = building.cost[res];
+
+                    if (resource.isUnlocked() && resource.rateOfChange > 1) {
+                        totalCost += quantity / resource.rateOfChange;
+                    } else {
+                        totalCost += quantity;
+                    }
+                }
+
                 if (building.weighting > 0) {
                     building.weighting = Math.max(Number.MIN_VALUE, building.weighting - 1e-7 * building.count);
-                    building.extraDescription = "AutoBuild weighting: " + getNiceNumber(building.weighting) + "<br>" + building.extraDescription;
+                    building.extraDescription = "Weighted cost: " + getNiceNumber(totalCost/building.weighting) + "<br>" + building.extraDescription;
+                    building.wcost = totalCost/building.weighting
                 }
+                building.extraDescription = "AutoBuild weighting: " + getNiceNumber(building.weighting) + "<br>" + building.extraDescription;
             }
         },
 
@@ -5937,7 +5951,20 @@
                 if (settings.arpaScaleWeighting) {
                     project.weighting /= 1 - (0.01 * project.progress);
                 }
+
+                let totalCost = 0;
+                for (let res in project.cost) {
+                    let resource = resources[res];
+                    let quantity = project.cost[res];
+
+                    if (resource.isUnlocked() && resource.rateOfChange > 1) {
+                        totalCost += quantity / resource.rateOfChange;
+                    } else {
+                        totalCost += quantity;
+                    }
+                }
                 if (project.weighting > 0) {
+                    project.wcost = totalCost;
                     project.extraDescription = `AutoARPA weighting: ${getNiceNumber(project.weighting)} (${project.currentStep}%)<br>${project.extraDescription}`;
                 }
             }
@@ -12556,6 +12583,7 @@ declare global {
 
             // Build building
             if (building.click()) {
+            	GameLog.logInfo("construction", `built ${building.name}, cost :` + getNiceNumber(building.wcost), ['queue']);
                 buildCount++;
                 // Same for gems when we're saving them, and missions as they tends to unlock new stuff
                 if (building.isMission() || (building.cost["Soul_Gem"] && settings.prestigeType === "whitehole" && settings.prestigeWhiteholeSaveGems)) {
