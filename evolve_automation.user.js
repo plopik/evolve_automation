@@ -484,20 +484,23 @@
 
         getProduction(source, locArg) {
             let produced = 0;
+            let producedMul = 1;
             let labelFound = false;
             for (let [label, value] of Object.entries(game.breakdown.p[this._id] ?? {})) {
                 if (value.indexOf("%") === -1) {
-                    if (labelFound) {
-                        break;
-                    } else if (label === poly.loc(source, locArg)) {
+                    if (!labelFound && label.split('+')[0] === poly.loc(source, locArg)) {
                         labelFound = true;
                         produced += parseFloat(value) || 0;
+                    } else {
+                        labelFound = false;
                     }
-                } else if (labelFound && this.isValidProductionLabel(label)) {
-                    produced *= 1 + (parseFloat(value) || 0) / 100;
+                } else if (labelFound && label.indexOf("ᄂ") === 0 && this.isValidProductionLabel(label)) {
+                    producedMul *= 1 + (parseFloat(value) || 0) / 100;
+                } else if (label.indexOf("ᄂ") === -1) {
+                    producedMul *= 1 + (parseFloat(value) || 0) / 100;
                 }
             }
-            return produced * state.globalProductionModifier;
+            return produced * producedMul * state.globalProductionModifier;
         }
 
         isValidProductionLabel(label) {
