@@ -9023,6 +9023,7 @@ declare global {
         let def = {
             autoBuild: false,
             autoPower: false,
+            buildingsDefaultSearch: "BUILD==TRUE",
             buildingsIgnoreZeroRate: false,
             buildingsLimitPowered: true,
             buildingTowerSuppression: 100,
@@ -19837,6 +19838,8 @@ declare global {
         };
 
         buildSettingsSection(sectionId, sectionName, resetFunction, updateBuildingSettingsContent);
+        filterBuildingSettingsTable();
+
     }
 
     function updateBuildingSettingsContent() {
@@ -19844,7 +19847,7 @@ declare global {
 
         let currentNode = $('#script_buildingContent');
         currentNode.empty().off("*");
-
+        addSettingsString(currentNode, "buildingsDefaultSearch", "Filter by default", "Filter you want to use by default");
         addSettingsToggle(currentNode, "buildingsIgnoreZeroRate", "Do not wait for resources without income", "Weighting checks will ignore resources without positive income(craftables, inactive factory goods, etc), buildings with such resources will not delay other buildings.");
         addSettingsToggle(currentNode, "buildingsLimitPowered", "Limit amount of powered buildings", "With this option enabled Max Build will prevent powering extra building. Can be useful to disable buildings with overrided settings.");
         addSettingsToggle(currentNode, "buildingsTransportGem", "Build cheapest Supplies transport", "By default script chooses between Lake Transport and Lake Bireme Warship comparing their 'Supplies Per Support', with this option enabled it will compare 'Supplies Per Soulgems' instead.");
@@ -19878,6 +19881,7 @@ declare global {
         let tableBodyNode = $('#script_buildingTableBody');
 
         $("#script_buildingSearch").on("keyup", filterBuildingSettingsTable); // Add building filter
+        $("#script_buildingsDefaultSearch").on("keyup", filterBuildingSettingsTable); // Add building filter
 
         // Add in a first row for switching "All"
         let newTableBodyText = '<tr value="All" class="unsortable"><td id="script_bldallToggle" style="width:35%"></td><td style="width:15%"></td><td style="width:15%"></td><td style="width:15%"></td><td style="width:20%"><span id="script_resetBuildingsPriority" class="script-refresh"></span></td></tr>';
@@ -19973,6 +19977,14 @@ declare global {
         let filter = document.getElementById("script_buildingSearch").value.toUpperCase();
         let trs = document.getElementById("script_buildingTableBody").getElementsByTagName("tr");
 
+        if ( filter === "") {
+            filter = settings.buildingsDefaultSearch.toUpperCase();
+        }
+
+        if (filter === "ALL") {
+            filter =""
+        }
+
         let filterChecker = null;
         let reg = filter.match(/^(.+)(<=|>=|===|==|<|>|!==|!=)(.+)$/);
         if (reg?.length === 4) {
@@ -20021,6 +20033,14 @@ declare global {
             filterChecker = (building) => checkCompare[reg[2]](buildingValue(building), testValue);
         }
 
+        if (filter === "") {
+            filterChecker = (b) => b.autoBuildEnabled;
+        }
+
+        if (filter === "all") {
+            filterChecker = (b) => true;
+        }
+
         // Loop through all table rows, and hide those who don't match the search query
         for (let i = 0; i < trs.length; i++) {
             let td = trs[i].getElementsByTagName("td")[0];
@@ -20039,6 +20059,7 @@ declare global {
                 }
             }
         }
+        resetTabHeight("buildingSettings");
     }
 
     function buildAllBuildingEnabledSettingsToggle() {
