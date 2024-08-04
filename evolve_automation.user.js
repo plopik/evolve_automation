@@ -12934,9 +12934,6 @@ declare global {
                     if (buildings.TritonFOB.stateOnCount < 1) { // Does not work with no FOB
                         maxStateOn = 0;
                     } else {
-                        //let protectedSoldiers = (game.global.race['armored'] ? 1 : 0) + (game.global.race['scales'] ? 1 : 0) + (game.global.tech['armor'] ?? 0);
-                        //let woundCap = Math.ceil((game.global.space.fob.enemy + (game.global.tech.outer >= 4 ? 75 : 62.5)) / 5) - protectedSoldiers;
-                        //let maxLanders = getHealingRate() < woundCap ? Math.floor((getHealingRate() + protectedSoldiers) / 1.5) : Number.MAX_SAFE_INTEGER;
                         let reservedSoldiers = settings.autoFleet ? FleetManagerOuter.nextShipDesiredCrew : 0;
                         let dispatchSoldiers = WarManager.currentSoldiers - Math.min(0, WarManager.wounded - Math.floor(getHealingRate()));
                         let healthySquads = Math.floor(Math.max(0, dispatchSoldiers - reservedSoldiers) / (3 * traitVal('high_pop', 0, 1)));
