@@ -525,16 +525,20 @@
                 return workersCount;
             }
 
+            if (workersCount <= 0) {
+                return this.income >= 0 ? 0 : 1
+            }
+
+
             let newWorkers = 0;
-            if (workersCount > 0) {
-                let totalIncome = this.getProduction(workersSource, locArg);
-                let resPerWorker = totalIncome / workersCount;
-                let usedIncome = totalIncome - this.income;
-                if (usedIncome > 0) {
-                    newWorkers = Math.ceil(usedIncome / resPerWorker);
-                }
-            } else if (this.income < 0) {
-                newWorkers = 1;
+            let totalIncome = this.getProduction(workersSource, locArg);
+            let resPerWorker = totalIncome / workersCount;
+            let usedIncome = totalIncome - this.income;
+            if (resPerWorker > 0 && usedIncome > 0) {
+                newWorkers = Math.ceil(usedIncome / resPerWorker);
+            }
+            if (resPerWorker <= 0  && this.income < 0) {
+                newWorkers = workersCount + 1
             }
 
             return newWorkers;
