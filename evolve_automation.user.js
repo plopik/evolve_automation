@@ -399,7 +399,12 @@
             this.maxQuantity = instance.max >= 0 ? instance.max : Number.MAX_SAFE_INTEGER;
             this.rateOfChange = instance.diff;
             this.rateMods = {};
-            this.incomeAdusted = false;
+            if (this.incomeAdusted > 0) {
+                this.incomeAdusted -= 1
+            }
+            if (this.incomeAdusted == 0) {
+                this.incomeAdusted = false;
+            }
         }
 
         finalizeData() {
@@ -12969,19 +12974,19 @@ declare global {
                 if (building === buildings.BeltEleriumShip && !resources.Elerium.isUseful()) {
                     maxStateOn = Math.min(maxStateOn, resources.Elerium.getBusyWorkers("job_space_miner", currentStateOn));
                     if (maxStateOn !== currentStateOn) {
-                        resources.Elerium.incomeAdusted = true;
+                        resources.Elerium.incomeAdusted = 3;
                     }
                 }
                 if (building === buildings.BeltIridiumShip && !resources.Iridium.isUseful()) {
                     maxStateOn = Math.min(maxStateOn, resources.Iridium.getBusyWorkers("job_space_miner", currentStateOn));
                     if (maxStateOn !== currentStateOn) {
-                        resources.Iridium.incomeAdusted = true;
+                        resources.Iridium.incomeAdusted = 3;
                     }
                 }
                 if (building === buildings.BeltIronShip && !resources.Iron.isUseful()) {
                     maxStateOn = Math.min(maxStateOn, resources.Iron.getBusyWorkers("job_space_miner", currentStateOn));
                     if (maxStateOn !== currentStateOn) {
-                        resources.Iron.incomeAdusted = true;
+                        resources.Iron.incomeAdusted = 3;
                     }
                 }
                 if (building === buildings.MoonIridiumMine && !resources.Iridium.isUseful()) {
