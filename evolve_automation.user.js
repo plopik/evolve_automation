@@ -20059,7 +20059,6 @@ declare global {
                 }
             }
         }
-        resetTabHeight("buildingSettings");
     }
 
     function buildAllBuildingEnabledSettingsToggle() {
