@@ -835,6 +835,7 @@
         get autoBuildEnabled() { return settings['bat' + this._vueBinding] }
         get autoStateEnabled() { return settings['bld_s_' + this._vueBinding] }
         get autoStateSmart() { return settings['bld_s2_' + this._vueBinding] }
+        get statePriority() { return settings['bld_sp_' + this._vueBinding] }
         get priority() { return settingsRaw['bld_p_' + this._vueBinding] }
         get _weighting() { return settings['bld_w_' + this._vueBinding] }
         get _autoMax() { return settings['bld_m_' + this._vueBinding] }
@@ -5888,7 +5889,7 @@
 
         sortByPriority() {
             this.priorityList.sort((a, b) => a.priority - b.priority);
-            this.statePriorityList.sort((a, b) => a.priority - b.priority);
+            this.statePriorityList.sort((a, b) => b.statePriority - a.statePriority || a.priority - b.priority);
         },
 
         managedPriorityList() {
@@ -5896,6 +5897,7 @@
         },
 
         managedStatePriorityList() {
+            this.statePriorityList.sort((a, b) => b.statePriority - a.statePriority || a.priority - b.priority);
             return this.statePriorityList.filter(building => (building.hasState() && building.autoStateEnabled && building.count > 0));
         }
     }
@@ -9047,6 +9049,7 @@ declare global {
 
             if (building.isSwitchable()) {
                 def['bld_s_' + id] = true; // autoStateEnabled
+                def['bld_sp_' + id] = 2; // priority overridable
             }
             if (building.is.smart) {
                 def['bld_s2_' + id] = true; // autoStateSmart
@@ -12821,6 +12824,11 @@ declare global {
             if (!game.global.settings.showGalactic && building._tab === "galaxy") {
                 maxStateOn = 0;
             }
+            
+            if (building.statePriority === 0 ) {
+                maxStateOn = 0;
+            }
+
             if (settings.buildingsLimitPowered) {
                 maxStateOn = Math.min(maxStateOn, building.autoMax);
             }
@@ -19857,11 +19865,12 @@ declare global {
           <div><input id="script_buildingSearch" class="script-searchsettings" type="text" placeholder="Search for buildings..."></div>
           <table style="width:100%">
             <tr>
-              <th class="has-text-warning" style="width:35%">Building</th>
+              <th class="has-text-warning" style="width:25%">Building</th>
               <th class="has-text-warning" style="width:15%" title="Enables auto building. Triggers ignores this option, allowing to build disabled things.">Auto Build</th>
               <th class="has-text-warning" style="width:15%" title="Maximum amount of buildings to build. Triggers ignores this option, allowing to build above limit. Can be also used to limit amount of enabled buildings, with respective option above.">Max Build</th>
               <th class="has-text-warning" style="width:15%" title="Script will try to spend 2x amount of resources on building having 2x weighting, and such.">Weighting</th>
-              <th class="has-text-warning" style="width:20%" title="First toggle enables basic automation based on priority, power, support, and consumption. Second enables logic made specially for particlular building, their effects are different, but generally it tries to behave smarter than just staying enabled all the time.">Auto Power</th>
+              <th class="has-text-warning" style="width:13%" title="First toggle enables basic automation based on priority, power, support, and consumption. Second enables logic made specially for particlular building, their effects are different, but generally it tries to behave smarter than just staying enabled all the time.">Auto Power</th>
+              <th class="has-text-warning" style="width:17%" title="Autopower will try to power buildings according to priority level, building of the same priority will be powered according to the list order">Power Priority</th>
             </tr>
             <tbody id="script_buildingTableBody"></tbody>
           </table>`);
@@ -19875,7 +19884,7 @@ declare global {
 
         for (let i = 0; i < BuildingManager.priorityList.length; i++) {
             let building = BuildingManager.priorityList[i];
-            newTableBodyText += `<tr value="${building._vueBinding}" class="script-draggable"><td id="script_${building._vueBinding}" style="width:35%"></td><td style="width:15%"></td><td style="width:15%"></td><td style="width:15%"></td><td style="width:20%"></td></tr>`;
+            newTableBodyText += `<tr value="${building._vueBinding}" class="script-draggable"><td id="script_${building._vueBinding}" style="width:30%"></td><td style="width:10%"></td><td style="width:15%"></td><td style="width:15%"></td><td style="width:10%"></td><td style="width:15%"></td><td style="width:5%"></td></tr>`;
         }
         tableBodyNode.append($(newTableBodyText));
 
@@ -19927,6 +19936,14 @@ declare global {
 
             buildingElement = buildingElement.next();
             buildBuildingStateSettingsToggle(buildingElement, building);
+
+            buildingElement = buildingElement.next();
+            if (building.isSwitchable()) {
+                addTableInput(buildingElement, "bld_sp_" + building._vueBinding);
+            }
+
+            buildingElement = buildingElement.next();
+            buildingElement.append(`<span class="script-lastcolumn"></span>`);
         }
 
         tableBodyNode.sortable({
@@ -20088,7 +20105,6 @@ declare global {
             node.addClass("script_bg_" + smartKey);
         }
 
-        node.append(`<span class="script-lastcolumn"></span>`);
         node.toggleClass('inactive-row', Boolean(settingsRaw.overrides[stateKey] || settingsRaw.overrides[smartKey]));
     }
 
