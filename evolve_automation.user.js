@@ -4836,6 +4836,10 @@
         hellAssigned: 0,
         hellReservedSoldiers: 0,
 
+        timeSinceLastWallAttack: 100,
+        lastWallStrength: 0,
+        lastWallStrengthDay: 0,
+
         updateGarrison() {
             let garrison = game.global.civic.garrison;
             if (garrison) {
@@ -4859,6 +4863,19 @@
                 this.hellPatrolSize = fortress.patrol_size;
                 this.hellAssigned = fortress.assigned;
                 this.hellReservedSoldiers = this.getHellReservedSoldiers();
+                if (this.lastWallStrength > fortress.walls) {
+                    this.timeSinceLastWallAttack = 0;
+                    this.lastWallStrengthDay = game.global.stats.days;
+                    GameLog.logDanger("special", `Wall attack on day ${game.global.stats.days} from ${this.lastWallStrength} to ${fortress.walls}`, ["hell"]);
+                }
+                if (fortress.patrols > 0 && game.global.stats.days > this.lastWallStrengthDay) {
+                    this.timeSinceLastWallAttack++;
+                    this.lastWallStrengthDay = game.global.stats.days;
+                    if (this.timeSinceLastWallAttack == 100) {
+                        GameLog.logDanger("special", `100 days since last attack`, ["hell"]);
+                    }
+                }
+                this.lastWallStrength = fortress.walls;
                 this._hellVue = getVueById("fort");
             } else {
                 this._hellVue = undefined;
@@ -10325,6 +10342,7 @@ declare global {
         let targetHellSoldiers = 0;
         let targetHellPatrols = 0;
         let targetHellPatrolSize = 0;
+        let hellGarrison = 0;
         // First handle not having enough soldiers, then handle patrols
         // Only go into hell at all if soldiers are close to full, or we are already there
         if (m.maxSoldiers > settings.hellHomeGarrison + settings.hellMinSoldiers &&
@@ -10332,19 +10350,18 @@ declare global {
             targetHellSoldiers = Math.min(m.currentSoldiers, m.maxSoldiers) - settings.hellHomeGarrison; // Leftovers from an incomplete patrol go to hell garrison
             let availableHellSoldiers = targetHellSoldiers - m.hellReservedSoldiers;
 
-            // Determine target hell garrison size
-            // Estimated average damage is roughly 35 * threat / defense, so required defense = 35 * threat / targetDamage
-            // But the threat hitting the fortress is only an intermediate result in the bloodwar calculation, it happens after predators and patrols but before repopulation,
-            // So siege threat is actually lower than what we can see. Patrol and drone damage is wildly swingy and hard to estimate, so don't try to estimate the post-fight threat.
-            // Instead base the defense on the displayed threat, and provide an option to bolster defenses when the walls get low. The threat used in the calculation
-            // ranges from 1 * threat for 100% walls to the multiplier entered in the settings at 0% walls.
-            let hellWallsMulti = settings.hellLowWallsMulti * (1 - game.global.portal.fortress.walls / 100); // threat modifier from damaged walls = 1 to lowWallsMulti
-            let hellTargetFortressDamage = game.global.portal.fortress.threat * 35 / settings.hellTargetFortressDamage; // required defense to meet target average damage based on current threat
+            let threatAfterPatrol = game.global.portal.fortress.threat
+            if (threatAfterPatrol > 1000) {
+                threatAfterPatrol += 1000
+                threatAfterPatrol *= 0.5 
+            }
+            let hellTargetFortressDefense = Math.ceil(threatAfterPatrol * 35 / Math.min(settings.hellTargetFortressDamage, game.global.portal.fortress.walls+1)) ; // required defense to meet target average damage based on current threat
             let hellTurretPower = buildings.PortalTurret.stateOnCount * (game.global.tech['turret'] ? (game.global.tech['turret'] >= 2 ? 70 : 50) : 35); // turrets count and power
-            let hellGarrison = m.getSoldiersForAttackRating(Math.max(0, hellWallsMulti * hellTargetFortressDamage - hellTurretPower)); // don't go below 0
+            hellGarrison = m.getSoldiersForAttackRating(Math.max(0, hellTargetFortressDefense - hellTurretPower)); // don't go below 0
+            consoleLog(hellTargetFortressDefense,hellGarrison,m.timeSinceLastWallAttack)
 
             // Always have at least half our hell contingent available for patrols, and if we cant defend properly just send everyone
-            if (availableHellSoldiers < hellGarrison) {
+            if (availableHellSoldiers < hellGarrison  || m.timeSinceLastWallAttack < 100) {
                 hellGarrison = 0; // If we cant defend adequately, send everyone out on patrol
             } else if (availableHellSoldiers < hellGarrison * 2) {
                 hellGarrison = Math.floor(availableHellSoldiers / 2); // Always try to send out at least half our people
@@ -10352,37 +10369,22 @@ declare global {
 
             // Determine the patrol attack rating
             if (settings.hellHandlePatrolSize) {
-                let patrolRating = game.global.portal.fortress.threat * settings.hellPatrolThreatPercent / 100;
+                let patrolRating = game.global.portal.fortress.threat * settings.hellPatrolThreatPercent / 100 / traitVal('holy', 1, '+');
 
-                // Now reduce rating based on drones, droids and bootcamps
-                if (game.global.portal.war_drone) {
-                    patrolRating -= settings.hellPatrolDroneMod * game.global.portal.war_drone.on * (game.global.tech['portal'] >= 7 ? 1.5 : 1);
-                }
-                if (game.global.portal.war_droid) {
-                    patrolRating -= settings.hellPatrolDroidMod * game.global.portal.war_droid.on * (game.global.tech['hdroid'] ? 2 : 1);
-                }
-                if (game.global.city.boot_camp) {
-                    patrolRating -= settings.hellPatrolBootcampMod * game.global.city.boot_camp.count;
+                let patrolRating2 = Math.max(patrolRating, settings.hellPatrolMinRating);
+
+                // Increase patrol attack rating if dead or recent mercenary hiring
+                if (settings.hellBolsterPatrolRating > 0) {
+                    patrolRating2 *= 1 + (m.m_use * settings.hellBolsterPatrolRating*0.001);
+                    patrolRating2 *= 1 + (m.deadSoldiers * settings.hellBolsterPatrolRating*0.01);
                 }
 
-                // In the end, don't go lower than the minimum...
-                patrolRating = Math.max(patrolRating, settings.hellPatrolMinRating);
-
-                // Increase patrol attack rating if alive soldier count is low to reduce patrol losses
-                if (settings.hellBolsterPatrolRating > 0 && settings.hellBolsterPatrolPercentTop > 0) { // Check if settings are on
-                    const homeGarrisonFillRatio = m.currentCityGarrison / m.maxCityGarrison;
-                    if (homeGarrisonFillRatio <= settings.hellBolsterPatrolPercentTop / 100) { // If less than top
-                        if (homeGarrisonFillRatio <= settings.hellBolsterPatrolPercentBottom / 100) { // and less than bottom
-                            patrolRating += settings.hellBolsterPatrolRating; // add full rating
-                        } else if (settings.hellBolsterPatrolPercentBottom < settings.hellBolsterPatrolPercentTop) { // If between bottom and top
-                            patrolRating += settings.hellBolsterPatrolRating * (settings.hellBolsterPatrolPercentTop / 100 - homeGarrisonFillRatio) // add rating proportional to where in the range we are
-                                              / (settings.hellBolsterPatrolPercentTop - settings.hellBolsterPatrolPercentBottom) * 100;
-                        }
-                    }
-                }
+                patrolRating2 = Math.min(patrolRating*6, patrolRating2);
 
                 // Patrol size
-                targetHellPatrolSize = m.getSoldiersForAttackRating(patrolRating);
+                targetHellPatrolSize = m.getSoldiersForAttackRating(patrolRating2) +1;
+
+                consoleLog(Math.floor(patrolRating),m.m_use,m.deadSoldiers,Math.floor(patrolRating2),targetHellPatrolSize)
 
                 // If patrol size is larger than available soldiers, send everyone available instead of 0
                 targetHellPatrolSize = Math.min(targetHellPatrolSize, availableHellSoldiers - hellGarrison);
@@ -10395,10 +10397,10 @@ declare global {
 
             // Special logic for small number of patrols
             if (settings.hellHandlePatrolSize && targetHellPatrols === 1) {
-                // If we could send 1.5 patrols, send 3 half-size ones instead
+                // If we could send 1.5 patrols, send 2 half-size ones instead
                 if ((availableHellSoldiers - hellGarrison) >= 1.5 * targetHellPatrolSize) {
-                    targetHellPatrolSize = Math.floor((availableHellSoldiers - hellGarrison) / 3);
-                    targetHellPatrols = Math.floor((availableHellSoldiers - hellGarrison) / targetHellPatrolSize);
+                    targetHellPatrolSize = Math.floor((availableHellSoldiers - hellGarrison) / 2);
+                    targetHellPatrols = 2
                 }
             }
         } else {
@@ -21628,6 +21630,11 @@ declare global {
             return opt ?? 0;
         }
     }
+
+    function consoleLog(...params) {
+        setTimeout(console.log.bind(console, ...params));
+    }
+
 
     var poly = {
     // Taken directly from game code with no functional changes, and minified.
