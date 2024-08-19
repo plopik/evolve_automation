@@ -348,6 +348,7 @@
             this._stackVueBinding = "stack-" + id;
             this._marketVueBinding = "market-" + id;
 
+            this.extraDescription = ""
             this.is = normalizeProperties(flags) ?? {};
         }
 
@@ -407,6 +408,8 @@
             if (this.incomeAdusted == 0) {
                 this.incomeAdusted = false;
             }
+            this.extraDescription = `To required ${poly.timeFormat(this.timeToRequired)}<br>`
+            this.extraDescription += `Required amount ${getNumberString(this.storageRequired)}<br>`
         }
 
         finalizeData() {
@@ -2142,6 +2145,7 @@
     var buildingIds = {};
     var arpaIds = {};
     var jobIds = {};
+    var resourceIds = {};
     var evolutions = {};
     var imitations = {};
     var races = {};
@@ -5886,6 +5890,7 @@
                     }
                 }
                 let totalCost = 0;
+                let ignoredRessource = "";
                 for (let res in building.cost) {
                     let resource = resources[res];
                     let quantity = building.cost[res];
@@ -5893,7 +5898,7 @@
                     if (resource.isUnlocked() && resource.rateOfChange > 1) {
                         totalCost += quantity / resource.rateOfChange;
                     } else {
-                        totalCost += quantity;
+                        ignoredRessource += res + " "
                     }
                 }
 
@@ -5901,6 +5906,9 @@
                     building.weighting = Math.max(Number.MIN_VALUE, building.weighting - 1e-7 * building.count);
                     building.extraDescription = "Weighted cost: " + getNiceNumber(totalCost/building.weighting) + "<br>" + building.extraDescription;
                     building.wcost = totalCost/building.weighting
+                    if (ignoredRessource != "") {
+                        building.extraDescription = "ignored ressource: " + ignoredRessource + "<br>" + building.extraDescription;
+                    }
                 }
                 building.extraDescription = "AutoBuild weighting: " + getNiceNumber(building.weighting) + "<br>" + building.extraDescription;
             }
@@ -15148,6 +15156,9 @@ declare global {
         for (let job of Object.values(crafter)){
             jobIds[job._originalId] = job;
         }
+        for (let resource of Object.values(resources)){
+            resourceIds[resource._id] = resource;
+        }
 
         updateStandAloneSettings();
         updateStateFromSettings();
@@ -15372,6 +15383,8 @@ declare global {
             obj = arpaIds["arpa" + match[1]];
         } else if (match = dataId.match(/^q([A-Za-z_-]+)\d*$/)) { // "q[id][order]" for buildings in queue
             obj = buildingIds[match[1]] || arpaIds[match[1]];
+        } else if (match = dataId.match(/^inc([A-Za-z_-]+)\d*$/)) { // "inc[id]" for ressource income 
+            obj = resourceIds[match[1]];
         } else { // "[id]" for buildings and researches
             obj = buildingIds[dataId] || techIds[dataId];
         }
