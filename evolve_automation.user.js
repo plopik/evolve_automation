@@ -3270,10 +3270,15 @@
           () => "Need more storage",
           () => settings.buildingWeightingNeedStorage
       ],[
-          () => resources.Population.maxQuantity > 50 && resources.Population.storageRatio < 0.9,
+          () => resources.Population.maxQuantity > 30 && resources.Population.storageRatio < 0.9,
           (building) => building.is.housing && building !== buildings.Alien1Consulate && !(building instanceof ResourceAction),
           () => "No more houses needed",
           () => settings.buildingWeightingUselessHousing
+      ],[
+          () => jobs.Priest && jobs.Priest.count < jobs.Priest.max,
+          (building) => (building.is.housing && building !== buildings.Alien1Consulate && building !== buildings.AlphaHabitat && !(building instanceof ResourceAction)) || building == buildings.RedBiodome,
+          () => "Need more pop for priest",
+          () => 3
       ],[
           () => game.global.race['orbit_decay'] && !game.global.race['orbit_decayed'],
           (building) => (building._tab === "city" || building._location === "spc_moon") && !(building instanceof ResourceAction),
