@@ -131,11 +131,13 @@
         }
 
         breakpointEmployees(breakpoint, ignoreMax) {
-            let breakpointActual = this.getBreakpoint(breakpoint);
+            let breakpointActual = this.getBreakpoint(Math.min(breakpoint,2));
 
             // -1 equals unlimited up to the maximum available jobs for this job
             if (breakpointActual === -1) {
                 breakpointActual = Number.MAX_SAFE_INTEGER;
+            } else if (breakpointActual === -2) {
+                breakpointActual = breakpoint == 3 ? Number.MAX_SAFE_INTEGER : 0;
             } else if (settings.jobScalePop && this._originalId !== "hell_surveyor"){
                 breakpointActual *= traitVal('high_pop', 0, 1);
             }
@@ -10578,7 +10580,7 @@ declare global {
         let minFarmers = 0;
         state.maxSpaceMiners = 0;
         // And deal with the rest now
-        for (let i = 0; i < 3; i++) {
+        for (let i = 0; i < 4; i++) {
             for (let j = 0; j < jobList.length; j++) {
                 let job = jobList[j];
 
