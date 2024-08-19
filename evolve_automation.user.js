@@ -10217,9 +10217,8 @@ declare global {
         // If we are not fully ready then return
         let healthyMin = settings.foreignAttackHealthySoldiersPercent / 100;
         let livingMin = (settings.foreignProtect === "auto" && m.wounded <= 0) ? 0
-          : settings.foreignAttackLivingSoldiersPercent / 100;
-        if ((m.wounded > (1 - healthyMin) * m.maxCityGarrison) ||
-            (m.currentCityGarrison < livingMin * m.maxCityGarrison)) {
+        : settings.foreignAttackLivingSoldiersPercent / 100;
+        if ((m.wounded > (1 - healthyMin) * m.maxCityGarrison) || (m.currentCityGarrison < livingMin * m.maxCityGarrison)) {
             return;
         }
 
@@ -10230,7 +10229,7 @@ declare global {
         let protectSoldiers = settings.foreignProtect === "always" ? true : false;
         if (settings.foreignProtect === "auto") {
             let garrison = game.global.civic.garrison;
-            let timeToRecruit = (m.deadSoldiers * 100 - garrison.progress) / (garrison.rate * 4) // Recruitmen ticks in short loop - 4 times per second
+            let timeToRecruit = (m.deadSoldiers * 100 - garrison.progress) / (garrison.rate * 4);//Recruitmen ticks in short loop - 4 times per second
             let timeToHeal = m.wounded / getHealingRate() * 5; // Heal tick in long loop - once per 5 seconds
             protectSoldiers = timeToRecruit > timeToHeal;
         }
@@ -10268,6 +10267,17 @@ declare global {
                     }
                 }
             }
+            if (foreign.policy === "ForceOccupy" && !foreign.gov.occ) {
+                currentTarget = foreign;
+                requiredTactic = 4;
+                requiredBattalion = m.maxCityGarrison;
+                if (m.availableGarrison < m.maxCityGarrison) {
+                        return; // Wait for more soldiers
+                } else {
+                    break;
+                }
+            }
+
         }
         // Nothing to attack
         if (!currentTarget) {
