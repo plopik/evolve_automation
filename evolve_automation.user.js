@@ -4732,7 +4732,7 @@
                     // Set last foreign to sabotage only, and then switch to occupy once we're ready to unify
                     if (settings.foreignUnification && settings.foreignOccupyLast && !haveTech('world_control')) {
                         let lastTarget = ["Occupy", "Sabotage"].includes(settings.foreignPolicySuperior) ? 2 : currentTarget.id;
-                        activeForeigns[lastTarget].policy = readyToUnify ? "Occupy" : "Sabotage";
+                        activeForeigns[lastTarget].policy = readyToUnify ? "ForceOccupy" : "Sabotage";
                     }
 
                     // Do not attack if policy set to influence, or we're ready to unify
@@ -10108,7 +10108,9 @@ declare global {
             minMoney = 0;
             maxCost = Number.MAX_SAFE_INTEGER;
         }
-        while (m.currentSoldiers < mercenaryMax && resources.Money.currentQuantity >= mercenaryCost &&
+        let maxHire = Math.max(0,mercenaryMax - m.currentSoldiers) + (m.m_use ? 0 : 1)
+
+        while (mercenariesHired < maxHire && resources.Money.currentQuantity >= mercenaryCost &&
               (resources.Money.spareQuantity - mercenaryCost > minMoney || mercenaryCost < maxCost) &&
             m.hireMercenary()) {
             mercenariesHired++;
