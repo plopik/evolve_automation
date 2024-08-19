@@ -12963,7 +12963,7 @@ declare global {
                         maxStateOn = 0;
                     } else {
                         let reservedSoldiers = settings.autoFleet ? FleetManagerOuter.nextShipDesiredCrew : 0;
-                        let dispatchSoldiers = WarManager.currentSoldiers - Math.min(0, WarManager.wounded - Math.floor(getHealingRate()));
+                        let dispatchSoldiers = WarManager.currentSoldiers - Math.max(0, WarManager.wounded - Math.floor(getHealingRate()));
                         let healthySquads = Math.floor(Math.max(0, dispatchSoldiers - reservedSoldiers) / (3 * traitVal('high_pop', 0, 1)));
                         maxStateOn = Math.min(maxStateOn, healthySquads /*, maxLanders*/ );
                     }
