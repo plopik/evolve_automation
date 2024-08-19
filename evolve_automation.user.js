@@ -12867,70 +12867,69 @@ declare global {
                 continue;
             }
             if (building.is.smart && building.autoStateSmart) {
-                if (resources.Power.currentQuantity <= resources.Power.maxQuantity || haveTech('replicator')) { // Saving power, unless we can afford everything
                     // Disable Belt Space Stations with no workers
-                    if (building === buildings.BeltSpaceStation) {
-                        let stationStorage = parseFloat(game.breakdown.c.Elerium?.[game.loc("space_belt_station_title")] ?? 0);
-                        let extraStations = stationStorage > 0 ? Math.floor((resources.Elerium.maxQuantity - resources.Elerium.maxCost) / stationStorage) : 0;
-                        let minersNeeded = buildings.BeltEleriumShip.stateOnCount * 2 + buildings.BeltIridiumShip.stateOnCount + buildings.BeltIronShip.stateOnCount;
-                        maxStateOn = Math.min(maxStateOn, Math.max(currentStateOn - extraStations, Math.ceil(minersNeeded / 3)));
-                    }
-                    if (building === buildings.CementPlant && jobs.CementWorker.count === 0) {
-                        maxStateOn = 0;
-                    }
-                    if (building === buildings.Mine && jobs.Miner.count === 0) {
-                        maxStateOn = 0;
-                    }
-                    if (building === buildings.CoalMine && jobs.CoalMiner.count === 0) {
-                        maxStateOn = 0;
-                    }
+                if (building === buildings.BeltSpaceStation) {
+                    let stationStorage = parseFloat(game.breakdown.c.Elerium?.[game.loc("space_belt_station_title")] ?? 0);
+                    let extraStations = stationStorage > 0 ? Math.floor((resources.Elerium.maxQuantity - resources.Elerium.maxCost) / stationStorage) : 0;
+                    let minersNeeded = buildings.BeltEleriumShip.stateOnCount * 2 + buildings.BeltIridiumShip.stateOnCount + buildings.BeltIronShip.stateOnCount;
+                    maxStateOn = Math.min(maxStateOn, Math.max(currentStateOn - extraStations, Math.ceil(minersNeeded / 3)));
+                }
+                if (building === buildings.CementPlant && jobs.CementWorker.count === 0) {
+                    maxStateOn = 0;
+                }
+                if (building === buildings.Mine && jobs.Miner.count === 0) {
+                    maxStateOn = 0;
+                }
+                if (building === buildings.CoalMine && jobs.CoalMiner.count === 0) {
+                    maxStateOn = 0;
+                }
                     // Enable cooling towers only if we can power at least two harbours
-                    if (building === buildings.LakeCoolingTower && availablePower < (building.powered * maxStateOn + ((500 * 0.92 ** maxStateOn) * (game.global.race['emfield'] ? 1.5 : 1)).toFixed(2) * Math.min(2, buildings.LakeHarbour.count))) {
-                        maxStateOn = 0;
-                    }
+                if (building === buildings.LakeCoolingTower && availablePower < (building.powered * maxStateOn + ((500 * 0.92 ** maxStateOn) * (game.global.race['emfield'] ? 1.5 : 1)).toFixed(2) * Math.min(2, buildings.LakeHarbour.count))) {
+                    maxStateOn = 0;
+                }
                     // Don't bother powering harbour if we have power for only one
-                    if (building === buildings.LakeHarbour && maxStateOn === 1 && building.count > 1) {
-                        maxStateOn = 0;
-                    }
-                    if (building === buildings.GasMining && !resources.Helium_3.isUseful()) {
-                        maxStateOn = Math.min(maxStateOn, resources.Helium_3.getBusyWorkers("space_gas_mining_title", currentStateOn));
-                        if (maxStateOn !== currentStateOn) {
-                            resources.Helium_3.incomeAdusted = true;
-                        }
-                    }
-                    if (building === buildings.GasMoonOilExtractor  && !resources.Oil.isUseful()) {
-                        maxStateOn = Math.min(maxStateOn, resources.Oil.getBusyWorkers("space_gas_moon_oil_extractor_title", currentStateOn));
-                        if (maxStateOn !== currentStateOn) {
-                            resources.Oil.incomeAdusted = true;
-                        }
-                    }
-                    // Kuiper Mines
-                    // TODO: Disable with 100% syndicate
-                    if (building === buildings.KuiperOrichalcum && !resources.Orichalcum.isUseful()) {
-                        maxStateOn = Math.min(maxStateOn, resources.Orichalcum.getBusyWorkers("space_kuiper_mine", currentStateOn, [resources.Orichalcum.title]));
-                        if (maxStateOn !== currentStateOn) {
-                            resources.Orichalcum.incomeAdusted = true;
-                        }
-                    }
-                    if (building === buildings.KuiperUranium && !resources.Uranium.isUseful()) {
-                        maxStateOn = Math.min(maxStateOn, resources.Uranium.getBusyWorkers("space_kuiper_mine", currentStateOn, [resources.Uranium.title]));
-                        if (maxStateOn !== currentStateOn) {
-                            resources.Uranium.incomeAdusted = true;
-                        }
-                    }
-                    if (building === buildings.KuiperNeutronium && !resources.Neutronium.isUseful()) {
-                        maxStateOn = Math.min(maxStateOn, resources.Neutronium.getBusyWorkers("space_kuiper_mine", currentStateOn, [resources.Neutronium.title]));
-                        if (maxStateOn !== currentStateOn) {
-                            resources.Neutronium.incomeAdusted = true;
-                        }
-                    }
-                    if (building === buildings.KuiperElerium && !resources.Elerium.isUseful()) {
-                        maxStateOn = Math.min(maxStateOn, resources.Elerium.getBusyWorkers("space_kuiper_mine", currentStateOn, [resources.Elerium.title]));
-                        if (maxStateOn !== currentStateOn) {
-                            resources.Elerium.incomeAdusted = true;
-                        }
+                if (building === buildings.LakeHarbour && maxStateOn === 1 && building.count > 1) {
+                    maxStateOn = 0;
+                }
+                if (building === buildings.GasMining && !resources.Helium_3.isUseful()) {
+                    maxStateOn = Math.min(maxStateOn, resources.Helium_3.getBusyWorkers("space_gas_mining_title", currentStateOn));
+                    if (maxStateOn !== currentStateOn) {
+                        resources.Helium_3.incomeAdusted = true;
                     }
                 }
+                if (building === buildings.GasMoonOilExtractor  && !resources.Oil.isUseful()) {
+                    maxStateOn = Math.min(maxStateOn, resources.Oil.getBusyWorkers("space_gas_moon_oil_extractor_title", currentStateOn));
+                    if (maxStateOn !== currentStateOn) {
+                        resources.Oil.incomeAdusted = true;
+                    }
+                }
+                    // Kuiper Mines
+                    // TODO: Disable with 100% syndicate
+                if (building === buildings.KuiperOrichalcum && !resources.Orichalcum.isUseful()) {
+                    maxStateOn = Math.min(maxStateOn, resources.Orichalcum.getBusyWorkers("space_kuiper_mine", currentStateOn, [resources.Orichalcum.title]));
+                    if (maxStateOn !== currentStateOn) {
+                        resources.Orichalcum.incomeAdusted = true;
+                    }
+                }
+                if (building === buildings.KuiperUranium && !resources.Uranium.isUseful()) {
+                    maxStateOn = Math.min(maxStateOn, resources.Uranium.getBusyWorkers("space_kuiper_mine", currentStateOn, [resources.Uranium.title]));
+                    if (maxStateOn !== currentStateOn) {
+                        resources.Uranium.incomeAdusted = true;
+                    }
+                }
+                if (building === buildings.KuiperNeutronium && !resources.Neutronium.isUseful()) {
+                    maxStateOn = Math.min(maxStateOn, resources.Neutronium.getBusyWorkers("space_kuiper_mine", currentStateOn, [resources.Neutronium.title]));
+                    if (maxStateOn !== currentStateOn) {
+                        resources.Neutronium.incomeAdusted = true;
+                    }
+                }
+                if (building === buildings.KuiperElerium && !resources.Elerium.isUseful()) {
+                    maxStateOn = Math.min(maxStateOn, resources.Elerium.getBusyWorkers("space_kuiper_mine", currentStateOn, [resources.Elerium.title]));
+                    if (maxStateOn !== currentStateOn) {
+                        resources.Elerium.incomeAdusted = true;
+                    }
+                }
+                
                 // Limit lander to sustainable amount
                 if (building === buildings.TritonLander) {
                     if (buildings.TritonFOB.stateOnCount < 1) { // Does not work with no FOB
