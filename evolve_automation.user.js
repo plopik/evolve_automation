@@ -1140,7 +1140,7 @@
                     resource === resources.Gateway_Support ? 5 :
                     resource === resources.Womlings_Support ? 6 : 1;
 
-                if (resource.rateOfChange >= minSupport) {
+                if (resource.rateOfChange >= minSupport + 2) {
                     uselessSupports.push(resource);
                 } else {
                     // If we have something useful - stop here, we care only about buildings with all supports useless
@@ -3087,7 +3087,7 @@
       ],[
           () => true,
           (building) => building.getUselessSupport(),
-          (support) => `Provided ${support.name} not currently needed`,
+          (support) => `${support.name} not currently needed`,
           () => settings.buildingWeightingUselessSupport
       ],[
           () => game.global.race['truepath'] && resources.Tau_Belt_Support.maxQuantity <= resources.Tau_Belt_Support.currentQuantity,
