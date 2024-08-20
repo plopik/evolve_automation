@@ -3769,11 +3769,11 @@
                 case "excess":
                     return [-1];
                 case "all":
-                    return [0.055];
+                    return [0.-2];
                 case "mixed":
                     return [0.985, -1];
                 case "full":
-                    return [0.985, -1, 0.055];
+                    return [0.985, -1, -2];
                 default:
                     return [];
             }
@@ -11776,6 +11776,11 @@ declare global {
                         }
                         keepRatio = Math.max(keepRatio, resource.storageRequired / resource.maxQuantity * m.storageShift);
                     }
+
+                    if (keepRatio === -2) { // All resources keep a buffer of 100
+                        keepRatio = Math.max(keepRatio, 100 / resource.maxQuantity);
+                    }
+
                     if (resource === resources.Food && !isHungryRace()) { // Preserve food
                         keepRatio = Math.max(keepRatio, 0.25);
                     }
@@ -11790,7 +11795,7 @@ declare global {
                             allowedConsume = Math.max(0, allowedConsume, maxConsume);
                         }
                     } else {
-                        if (resource.storageRatio > keepRatio + 0.01) {
+                        if (resource.storageRatio > keepRatio + 0.001) {
                             let maxConsume = Math.ceil(m.maxConsumeForRatio(resource, keepRatio));
                             allowedConsume = Math.max(1, allowedConsume, maxConsume);
                         } else if (resource.storageRatio > keepRatio) {
