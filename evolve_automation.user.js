@@ -4647,7 +4647,7 @@
         _foreignVue: undefined,
 
         purchaseMoney: 0,
-        purchaseForeigngs: [],
+        purchaseForeigns: [],
         foreignActive: [],
         foreignTarget: null,
 
@@ -4675,7 +4675,7 @@
 
         updateForeigns() {
             this.purchaseMoney = 0;
-            this.purchaseForeigngs = [];
+            this.purchaseForeigns = [];
             this._foreignVue = getVueById("foreign");
             let foreignUnlocked = this._foreignVue?.vis();
             if (foreignUnlocked) {
@@ -4756,7 +4756,7 @@
                         if (foreign.policy === "Purchase" && !foreign.gov.buy && foreign.gov.act !== "purchase") {
                             let moneyNeeded = Math.max(poly.govPrice(foreign.id), (foreign.gov.spy < 3 ? this.spyCost(foreign.id, 3) : 0));
                             if (moneyNeeded <= resources.Money.maxQuantity) {
-                                this.purchaseForeigngs.push(foreign.id);
+                                this.purchaseForeigns.push(foreign.id);
                                 this.purchaseMoney = Math.max(moneyNeeded, this.purchaseMoney);
                             }
                         }
@@ -10205,7 +10205,7 @@ declare global {
             }
 
             // Don't kill spies doing other things if we already can purchase
-            if (m.purchaseMoney > 0 && m.purchaseForeigngs.includes(foreign.id) && espionageMission === m.Types.Purchase && foreign.gov.spy < 3 && !game.global.race['elusive']) {
+            if (m.purchaseMoney > 0 && m.purchaseForeigns.includes(foreign.id) && espionageMission === m.Types.Purchase && foreign.gov.spy < 3 && !game.global.race['elusive']) {
                 continue;
             }
 
